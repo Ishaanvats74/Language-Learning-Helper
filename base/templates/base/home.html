@@ -15,7 +15,7 @@
         {% for detail in details %}
         <div>
             <h5>
-                {{detail.id}} -- <a href="About_us/{{detail.id}}">{{detail.name}}</a>
+                {{detail.id}} -- <a href="{% url 'About us' detail.id %}">{{detail.name}}</a>
     
             </h5>
         </div>
