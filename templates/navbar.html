@@ -14,13 +14,13 @@
             <div class="flex items-center space-x-6">
                 
               <img src="{% static 'translator_logo.png' %}" alt="" class="w-10 h-10 rounded-full">
-              <a href="#" class="text-white text-lg font-semibold hover:text-yellow-300">Home</a>
-              <a href="#" class="text-white text-lg font-semibold hover:text-yellow-300">Translator</a>
-              <a href="#" class="text-white text-lg font-semibold hover:text-yellow-300">About Us</a>
+              <a href="/" class="text-white text-lg font-semibold hover:text-yellow-300">Home</a>
+              <a href="{% url 'Translator' %}" class="text-white text-lg font-semibold hover:text-yellow-300">Translator</a>
+              <a href="{% url 'About us' %}" class="text-white text-lg font-semibold hover:text-yellow-300">About Us</a>
             </div>
             <div class="flex items-center space-x-4">
-              <input type="text" placeholder="Search..." class="px-3 py-1 rounded-md  focus:ring-1 focus:bg-white focus:text-black border"/>
-              <a href="#" class="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800">Dashboard</a>
+              <input type="text" placeholder="Search..." class="px-3 py-1 rounded-md hover:bg-white hover:text-black border bg-white/80"/>
+              <a href="{% url 'Dashboard' %}" class="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800">Dashboard</a>
               <div class="w-10 h-10 bg-white text-black flex items-center justify-center rounded-full font-bold">
                 I
               </div>

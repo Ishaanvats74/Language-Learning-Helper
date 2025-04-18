@@ -8,9 +8,41 @@
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body>   {% block content %}
+<body>   
+    {% block content %}
     
-    
+    <section class="text-center py-16 px-4 bg-indigo-600 text-white">
+        <h1 class="text-4xl font-bold mb-4">Welcome to Language Learning Helper</h1>
+        <p class="text-lg max-w-2xl mx-auto">Your smart companion for fast, accurate, and real-time translations. Break language barriers and explore the world—one word at a time.</p>
+        <a href="{% url 'Translator' %}" class="mt-6 inline-block bg-yellow-400 text-black font-semibold px-6 py-2 rounded-full hover:bg-yellow-300 transition">Try the Translator</a>
+    </section>
+    <section class="py-12 px-6 bg-white text-center">
+        <h2 class="text-3xl font-semibold mb-8 text-gray-800">Features You'll Love</h2>
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div>
+            <h3 class="text-xl font-semibold text-indigo-600">🌐 Multi-language Support</h3>
+            <p class="text-gray-600 mt-2">Translate between dozens of languages with ease.</p>
+        </div>
+        <div>
+            <h3 class="text-xl font-semibold text-indigo-600">⚡ Instant Results</h3>
+            <p class="text-gray-600 mt-2">Get fast translations with a user-friendly interface.</p>
+        </div>
+        <div>
+            <h3 class="text-xl font-semibold text-indigo-600">🧠 AI-Assisted Accuracy</h3>
+            <p class="text-gray-600 mt-2">Backed by smart algorithms to give you context-aware translations.</p>
+        </div>
+        </div>
+    </section>
+    <section class="bg-gray-100 py-10 px-6 text-center">
+        <h2 class="text-2xl font-bold mb-6">How It Works</h2>
+        <ol class="list-decimal flex flex-col justify-center items-center mx-auto text-gray-700 space-y-2 text-left">
+            <li>Select your source and target languages</li>
+            <li>Type or paste your text into the input box</li>
+            <li>Click "Translate" and get results instantly</li>
+            <li>Copy or share to the translated text</li>
+        </ol>
+    </section>
+                  
     
     {% endblock content %}
 </body>
