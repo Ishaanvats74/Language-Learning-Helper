@@ -1,56 +1,46 @@
-from django.shortcuts import render
 import requests
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+
+RAPIDAPI_KEY = "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6"
 
 def get_languages():
     url = "https://microsoft-translator-text.p.rapidapi.com/languages"
     querystring = {"api-version": "3.0"}
     headers = {
-        "X-RapidAPI-Key": "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6",
-        "X-RapidAPI-Host": "microsoft-translator-text.p.rapidapi.com"
+        "x-rapidapi-host": "microsoft-translator-text.p.rapidapi.com",
+        "x-rapidapi-key": RAPIDAPI_KEY,
     }
     response = requests.get(url, headers=headers, params=querystring)
-    data = response.json()["translation"]
-    return {info["name"]: code for code, info in data.items()}
+    data = response.json()
+    languages = data["translation"]
+    return [(code, info["name"]) for code, info in languages.items()]
 
-LANGUAGES = get_languages()
-
-def translate_view(request):
+def translator_view(request):
+    languages = get_languages()
     translated_text = ""
-    selected_from = "English"
-    selected_to = "Hindi"
-    input_text = ""
-
+    
     if request.method == "POST":
-        input_text = request.POST.get("text")
-        selected_from = request.POST.get("from_lang")
-        selected_to = request.POST.get("to_lang")
-        from_code = LANGUAGES[selected_from]
-        to_code = LANGUAGES[selected_to]
-        translated_text = translate_text(input_text, from_code, to_code)
+        from_lang = request.POST.get("from_lang")
+        to_lang = request.POST.get("to_lang")
+        input_text = request.POST.get("input_text")
 
-    return render(request, "base/index.html", {
-        "languages": LANGUAGES.keys(),
-        "translated_text": translated_text,
-        "selected_from": selected_from,
-        "selected_to": selected_to,
-        "input_text": input_text,
+        url = "https://microsoft-translator-text.p.rapidapi.com/translate"
+        querystring = {"to": to_lang, "api-version": "3.0", "from": from_lang}
+        payload = [{"Text": input_text}]
+        headers = {
+            "content-type": "application/json",
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "microsoft-translator-text.p.rapidapi.com",
+        }
+        response = requests.post(url, json=payload, headers=headers, params=querystring)
+        translated_text = response.json()[0]["translations"][0]["text"]
+
+    return render(request, "translator.html", {
+        "languages": languages,
+        "translated_text": translated_text
     })
 
-def translate_text(text, from_code, to_code):
-    url = "https://microsoft-translator-text.p.rapidapi.com/translate"
-    querystring = {
-        "to": to_code,
-        "from": from_code,
-        "api-version": "3.0"
-    }
-    headers = {
-        "content-type": "application/json",
-        "X-RapidAPI-Key": "YOUR_API_KEY",
-        "X-RapidAPI-Host": "microsoft-translator-text.p.rapidapi.com"
-    }
-    body = [{"Text": text}]
-    response = requests.post(url, headers=headers, params=querystring, json=body)
-    return response.json()[0]["translations"][0]["text"]
 
 
 def Home(request):
