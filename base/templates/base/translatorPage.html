@@ -1,60 +1,57 @@
 {% extends 'main.html' %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body>
 
-    {% block content %}
-    <section class="bg-indigo-600 text-white py-12 text-center">
-        <h1 class="text-4xl font-bold mb-2">🌐 Translate Instantly</h1>
-        <p class="text-lg">Choose your languages, type your text, and get real-time translations instantly.</p>
-    </section>
-    <section class="py-10 px-4 bg-gray-100">
-        <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
+{% block content %}
+<section class="bg-indigo-600 text-white py-12 text-center">
+    <h1 class="text-4xl font-bold mb-2">🌐 Translate Instantly</h1>
+    <p class="text-lg">Choose your languages, type your text, and get real-time translations instantly.</p>
+</section>
+
+<section class="py-10 px-4 bg-gray-100">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
+        <form method="POST">
+            {% csrf_token %}
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block mb-1 text-gray-700 font-medium">From Language</label>
-                    <select class="w-full p-2 border border-gray-300 rounded-md">
-                    <option>English</option>
-                    <option>Hindi</option>
-                    <option>Spanish</option>
+                    <select name="from_lang" class="w-full p-2 border border-gray-300 rounded-md">
+                        {% for lang in languages %}
+                        <option value="{{ lang }}" {% if lang == selected_from %}selected{% endif %}>{{ lang }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div>
                     <label class="block mb-1 text-gray-700 font-medium">To Language</label>
-                    <select class="w-full p-2 border border-gray-300 rounded-md">
-                        <option>Hindi</option>
-                        <option>English</option>
-                        <option>French</option>
+                    <select name="to_lang" class="w-full p-2 border border-gray-300 rounded-md">
+                        {% for lang in languages %}
+                        <option value="{{ lang }}" {% if lang == selected_to %}selected{% endif %}>{{ lang }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
-            <div>
+
+            <div class="mt-4">
                 <label class="block mb-1 text-gray-700 font-medium">Enter Text</label>
-                <textarea class="w-full h-32 p-3 border border-gray-300 rounded-md resize-none" placeholder="Type or paste text..."></textarea>
+                <textarea name="text" class="w-full h-32 p-3 border border-gray-300 rounded-md resize-none" placeholder="Type or paste text...">{{ input_text }}</textarea>
             </div>
-            <div class="text-center">
-                <button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-500 transition">
+
+            <div class="text-center mt-6">
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-500 transition">
                     Translate
                 </button>
             </div>
-            <div>
-                <label class="block mb-1 text-gray-700 font-medium">Translated Text</label>
-                <textarea class="w-full h-32 p-3 border border-gray-300 rounded-md bg-gray-100 resize-none" readonly>Translation will appear here...</textarea>
-            </div>
-            <div class="flex justify-end space-x-4">
-                <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">🔊 Speak</button>
-                <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">📋 Copy</button>
-            </div>
+        </form>
+
+        {% if translated_text %}
+        <div>
+            <label class="block mb-1 text-gray-700 font-medium">Translated Text</label>
+            <textarea class="w-full h-32 p-3 border border-gray-300 rounded-md bg-gray-100 resize-none" readonly>{{ translated_text }}</textarea>
         </div>
-    </section>
-            
-    {% endblock content %}
-    
-</body>
-</html>
+        <div class="flex justify-end space-x-4">
+            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">🔊 Speak</button>
+            <button onclick="navigator.clipboard.writeText('{{ translated_text }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">📋 Copy</button>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock content %}
+
