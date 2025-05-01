@@ -4,45 +4,43 @@ from django.http import HttpResponse
 from django.contrib import messages
 import json
 
-# Your API key (consider moving this to settings.py)
-RAPIDAPI_KEY = "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6"
+# Your API key (consider moving this to settings.py or environment variables for security)
+# Make sure this is your current valid RapidAPI key
+RAPIDAPI_KEY = "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6"  # Verify this key is active
+RAPIDAPI_HOST = "translateai.p.rapidapi.com"
 
 def get_languages():
-    """Fetch available languages from Microsoft Translator API"""
-    url = "https://microsoft-translator-text.p.rapidapi.com/languages"
-    querystring = {"api-version": "3.0"}
-    headers = {
-        "x-rapidapi-host": "microsoft-translator-text.p.rapidapi.com",
-        "x-rapidapi-key": RAPIDAPI_KEY,
-    }
-    
-    try:
-        response = requests.get(url, headers=headers, params=querystring)
-        response.raise_for_status()
-        data = response.json()
-        languages = data.get("translation", {})
-        return [(code, info["name"]) for code, info in languages.items()]
-    except Exception as e:
-        print(f"Error fetching languages: {e}")
-        # Fallback to common languages if API fails
-        return [
-            ('en', 'English'),
-            ('es', 'Spanish'),
-            ('fr', 'French'),
-            ('de', 'German'),
-            ('it', 'Italian'),
-            ('zh-Hans', 'Chinese (Simplified)'),
-            ('ja', 'Japanese'),
-            ('ko', 'Korean'),
-            ('ru', 'Russian'),
-            ('ar', 'Arabic'),
-            ('hi', 'Hindi'),
-            ('pt', 'Portuguese')
-        ]
+    """Return list of supported languages for TranslateAI API"""
+    # TranslateAI supports many languages but doesn't have a specific endpoint for listing them
+    # Providing common languages based on ISO 639-1 codes
+    return [
+        ('auto', 'Auto-detect'),
+        ('en', 'English'),
+        ('es', 'Spanish'),
+        ('fr', 'French'),
+        ('de', 'German'),
+        ('it', 'Italian'),
+        ('zh', 'Chinese (Simplified)'),
+        ('ja', 'Japanese'),
+        ('ko', 'Korean'),
+        ('ru', 'Russian'),
+        ('ar', 'Arabic'),
+        ('hi', 'Hindi'),
+        ('bn', 'Bengali'),
+        ('pt', 'Portuguese'),
+        ('nl', 'Dutch'),
+        ('tr', 'Turkish'),
+        ('pl', 'Polish'),
+        ('uk', 'Ukrainian'),
+        ('cs', 'Czech'),
+        ('sv', 'Swedish'),
+        ('vi', 'Vietnamese'),
+        ('th', 'Thai')
+    ]
 
 
 def translator_view(request):
-    """Main translation view without JavaScript dependencies"""
+    """Main translation view"""
     # Default values
     languages = get_languages()
     translated_text = ""
@@ -53,73 +51,93 @@ def translator_view(request):
     # Process translation request
     if request.method == "POST":
         action = request.POST.get('action', 'translate')
+        from_lang = request.POST.get("from_lang", "en")
+        to_lang = request.POST.get("to_lang", "es")
+        input_text = request.POST.get("input_text", "").strip()
         
         # Handle different form actions
         if action == 'translate':
-            from_lang = request.POST.get("from_lang", "en")
-            to_lang = request.POST.get("to_lang", "es")
-            input_text = request.POST.get("input_text", "").strip()
-            
             # Only call API if there's text to translate
             if input_text:
                 try:
-                    url = "https://microsoft-translator-text.p.rapidapi.com/translate"
-                    querystring = {
-                        "to": to_lang,
-                        "api-version": "3.0",
-                        "from": from_lang,
-                        "profanityAction": "NoAction",
-                        "textType": "plain"
+                    # Use TranslateAI API
+                    url = "https://translateai.p.rapidapi.com/google/translate/json"
+                    
+                    # Format the origin_language (use "auto" if auto-detect was selected)
+                    origin_language = "auto" if from_lang == "auto" else from_lang
+                    
+                    # Prepare the payload for TranslateAI API
+                    payload = {
+                        "origin_language": origin_language,
+                        "target_language": to_lang,
+                        "json_content": {
+                            "text": input_text
+                        }
                     }
                     
-                    payload = [{"Text": input_text}]
                     headers = {
-                        "content-type": "application/json",
+                        "Content-Type": "application/json",
                         "X-RapidAPI-Key": RAPIDAPI_KEY,
-                        "X-RapidAPI-Host": "microsoft-translator-text.p.rapidapi.com",
+                        "X-RapidAPI-Host": RAPIDAPI_HOST
                     }
                     
-                    response = requests.post(url, json=payload, headers=headers, params=querystring)
+                    print(f"Sending request to: {url}")
+                    print(f"With headers: {headers}")
+                    print(f"With payload: {payload}")
+                    
+                    # Make the POST request
+                    response = requests.post(url, json=payload, headers=headers)
+                    
+                    # Debug the response
+                    print(f"Status Code: {response.status_code}")
+                    print(f"Response Headers: {response.headers}")
+                    print(f"Response Content: {response.text[:500]}...")  # Print first 500 chars for debugging
+                    
+                    # Check for HTTP errors
                     response.raise_for_status()
                     
+                    # Parse the response
                     result = response.json()
-                    print(f"API Response: {json.dumps(result, indent=2)}")
                     
-                    if result and len(result) > 0:
-                        translated_text = result[0]["translations"][0]["text"]
+                    # Extract translated text from the TranslateAI response format
+                    if result and "translated_json" in result and "text" in result["translated_json"]:
+                        translated_text = result["translated_json"]["text"]
+                        messages.success(request, "Translation successful!")
                     else:
-                        messages.error(request, "No translation returned")
+                        messages.error(request, "No translation returned from API")
+                        print(f"Unexpected API response structure: {result}")
                 
                 except requests.exceptions.RequestException as e:
                     print(f"API Request Error: {e}")
-                    messages.error(request, "Translation API request failed. Please try again later.")
+                    messages.error(request, f"Translation API request failed: {str(e)}")
                 
                 except (KeyError, IndexError, json.JSONDecodeError) as e:
                     print(f"Response parsing error: {e}")
-                    messages.error(request, "Could not process translation response.")
+                    print(f"Response content: {response.text if 'response' in locals() else 'No response'}")
+                    messages.error(request, f"Could not process translation response: {str(e)}")
                 
                 except Exception as e:
                     print(f"Unexpected error: {e}")
-                    messages.error(request, "An unexpected error occurred.")
+                    messages.error(request, f"An unexpected error occurred: {str(e)}")
+
+                # If translation failed, translated_text remains empty
+                if not translated_text:
+                    translated_text = ""
         
         elif action == 'swap_languages':
             # Handle language swap action
-            from_lang = request.POST.get("to_lang", "es")
-            to_lang = request.POST.get("from_lang", "en")
-            input_text = request.POST.get("input_text", "")
-            translated_text = request.POST.get("translated_text", "")
+            # Swap the languages (don't swap if auto-detect is selected)
+            if from_lang != "auto":
+                from_lang, to_lang = to_lang, from_lang
+            else:
+                # If auto-detect was selected, just set from_lang to to_lang
+                from_lang = to_lang
+                to_lang = request.POST.get("from_lang", "en")
             
-            # Swap the input and translated text
-            input_text, translated_text = translated_text, input_text
-        
-        elif action == 'copy_text':
-            # We'll handle copying on the frontend with minimal JS
-            # Just return the same form data
-            from_lang = request.POST.get("from_lang", "en")
-            to_lang = request.POST.get("to_lang", "es")
-            input_text = request.POST.get("input_text", "")
-            translated_text = request.POST.get("translated_text", "")
-            messages.success(request, "Text copied to clipboard!")
+            # Also swap the texts if both exist
+            if input_text or request.POST.get("translated_text", ""):
+                input_text = request.POST.get("translated_text", "")
+                translated_text = request.POST.get("input_text", "")
     
     # Prepare context for the template
     context = {
