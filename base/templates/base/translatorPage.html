@@ -1,64 +1,103 @@
 {% extends 'main.html' %}
-
 {% block content %}
 <section class="bg-indigo-600 text-white py-12 text-center">
     <h1 class="text-4xl font-bold mb-2">🌐 Translate Instantly</h1>
-    <p class="text-lg">Choose your languages, type your text, and get real-time translations instantly.</p>
+    <p class="text-lg">Choose your languages, type your text, and get real-time translations.</p>
 </section>
 
 <section class="py-10 px-4 bg-gray-100">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <!-- Messages/Alerts -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% else %}bg-green-50 border-green-200 text-green-800{% endif %} border px-4 py-3 rounded relative mb-6" role="alert">
+                    <span class="block sm:inline">{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
         <form method="post" class="space-y-6">
             {% csrf_token %}
-            <div class="grid md:grid-cols-2 gap-4">
+            
+            <!-- Hidden action field -->
+            <input type="hidden" name="action" value="translate" id="form-action">
+            
+            <!-- Hidden field for translated text -->
+            <input type="hidden" name="translated_text" value="{{ translated_text }}">
+            
+            <div class="grid md:grid-cols-2 gap-4 relative">
                 <div>
-                    <label>From Language</label>
+                    <label class="block mb-1 text-gray-700 font-medium">From Language</label>
                     <select name="from_lang" class="w-full p-2 border border-gray-300 rounded-md">
                         {% for code, name in languages %}
-                            <option value="{{ code }}" {% if request.POST.from_lang == code %}selected{% endif %}>{{ name }}</option>
+                            <option value="{{ code }}" {% if from_lang == code %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label>To Language</label>
+                    <label class="block mb-1 text-gray-700 font-medium">To Language</label>
                     <select name="to_lang" class="w-full p-2 border border-gray-300 rounded-md">
                         {% for code, name in languages %}
-                            <option value="{{ code }}" {% if request.POST.to_lang == code %}selected{% endif %}>{{ name }}</option>
+                            <option value="{{ code }}" {% if to_lang == code %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                
+                <!-- Swap languages button -->
+                <button type="submit" onclick="document.getElementById('form-action').value='swap_languages'" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-100 hover:bg-indigo-200 rounded-full p-2 border border-indigo-300">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                </button>
             </div>
-        
+       
             <div>
-                <label>Enter Text</label>
-                <textarea name="input_text" class="w-full h-32 p-3 border rounded-md resize-none">{{ request.POST.input_text }}</textarea>
+                <label class="block mb-1 text-gray-700 font-medium">Enter Text</label>
+                <textarea name="input_text" class="w-full h-32 p-3 border rounded-md resize-none" placeholder="Type or paste text to translate...">{{ input_text }}</textarea>
             </div>
-        
+       
             <div class="text-center">
-                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold">
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition duration-200">
                     Translate
                 </button>
             </div>
         </form>
-
-        {% if translated_text %}
-        <div>
+       
+        
+        <div class="mt-6">
             <label class="block mb-1 text-gray-700 font-medium">Translated Text</label>
-            <textarea class="w-full h-32 p-3 border border-gray-300 rounded-md bg-gray-100 resize-none" readonly>{{ translated_text }}</textarea>
+            <textarea id="translated-text" class="w-full h-32 p-3 border border-gray-300 rounded-md bg-gray-50 resize-none" readonly>{{ translated_text }}</textarea>
+            
+            <div class="flex justify-end space-x-4 mt-2">
+                <!-- Copy button with minimal JS -->
+                <button onclick="copyText(); return false;" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                    Copy
+                </button>
+                
+                <!-- Download as text file link -->
+                <a href="data:text/plain;charset=utf-8,{{ translated_text|urlencode }}" download="translation.txt" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Download
+                </a>
+            </div>
         </div>
-        <div class="flex justify-end space-x-4">
-            <button onclick="speakText('{{ translated_text }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">🔊 Speak</button>
-            <button onclick="navigator.clipboard.writeText('{{ translated_text }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">📋 Copy</button>
-        </div>
-        {% endif %}
+        
     </div>
 </section>
 
+<!-- Minimal JavaScript just for clipboard functionality -->
 <script>
-    function speakText(text) {
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(text);
-        synth.speak(utterance);
+    function copyText() {
+        const textArea = document.getElementById('translated-text');
+        if (textArea) {
+            textArea.select();
+            document.execCommand('copy');
+        }
     }
 </script>
 {% endblock content %}
