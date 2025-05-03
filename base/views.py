@@ -1,13 +1,48 @@
 import requests
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.contrib import messages
 import json
+import pyttsx3
+from django.http import HttpResponse
 
-# Your API key (consider moving this to settings.py or environment variables for security)
-# Make sure this is your current valid RapidAPI key
-RAPIDAPI_KEY = "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6"  # Verify this key is active
+
+def text_to_speech(text):
+    """Function to convert text to speech using pyttsx3"""
+    try:
+        engine = pyttsx3.init()
+        engine.say(text)
+        engine.runAndWait()
+        return True
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        return False
+
+def my_view(request):
+    """View to handle text-to-speech requests"""
+    if request.method == 'POST':
+        text = request.POST.get('translated_text', '')
+        
+        if not text:
+            messages.error(request, "No text provided for speech.")
+            return redirect('translator')
+        
+        success = text_to_speech(text)
+        
+        if success:
+            messages.success(request, "Text spoken successfully!")
+        else:
+            messages.error(request, "Failed to speak the text. Please try again.")
+            
+        # Redirect back to translator page after speaking
+        return redirect('translator')
+        
+    # If not a POST request, redirect to translator
+    return redirect('translator')
+
+RAPIDAPI_KEY = "ca96b4d48emsh41d9e7d659a1317p15cb7ajsnc295d89daab6"  
 RAPIDAPI_HOST = "translateai.p.rapidapi.com"
+
+
 
 def get_languages():
     """Return list of supported languages for TranslateAI API"""
@@ -149,6 +184,8 @@ def translator_view(request):
     }
     
     return render(request, "base/translatorPage.html", context)
+
+
 
 
 def Home(request):

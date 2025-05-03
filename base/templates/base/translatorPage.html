@@ -75,13 +75,17 @@
                     Copy
                 </button>
                 
-                <!-- Download as text file link -->
-                <a id="download-link" href="#" download="translation.txt" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    Download
-                </a>
+                <!-- Fixed Speak button form -->
+                <form method="post" action="{% url 'text_to_speech' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="translated_text" value="{{ translated_text }}">
+                    <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                        </svg>
+                        Speak
+                    </button>
+                </form>
             </div>
         </div>
         
@@ -111,26 +115,6 @@
                         console.error('Failed to copy text: ', err);
                     });
             });
-        }
-        
-        // Download functionality
-        const downloadLink = document.getElementById('download-link');
-        
-        if (downloadLink && textArea) {
-            downloadLink.addEventListener('click', function(e) {
-                // Create a blob with the text content
-                const blob = new Blob([textArea.value], {type: 'text/plain'});
-                const url = URL.createObjectURL(blob);
-                
-                // Set the download link's href to the blob URL
-                downloadLink.href = url;
-                
-                // Clean up after download
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 100);
-            });
-        }
-    });
+        }});
 </script>
 {% endblock content %}
